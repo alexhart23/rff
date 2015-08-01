@@ -4,11 +4,6 @@ __author__ = 'alexhart23'
 
 print("hello from vbd_robot")
 
-# This is where you are free to implement your own AI drafter.  To start out with we have a basic drafter taking the
-# player by draft position, but you can adjust the down_shift to have it pick players X spots back from the top
-# average draft position and see how it changes the results.
-
-
 def set_info(player_history_init, year):
     global player_history
     global current_year
@@ -49,7 +44,9 @@ def calculate_vbd_baselines(pos,starters):
     # get the lowest score of a starter
     worst_starter = top_scores[-1]
     return average_starter, worst_starter
-
+"""
+    of the available players, figures out which has the highest VBD score
+"""
 def get_top_player(available_players, team):
     global current_year
     qb_avg, qb_worst = calculate_vbd_baselines("QB",12)
@@ -118,7 +115,4 @@ def get_top_player(available_players, team):
 
 def draft_player(available_players, team):
     top_player_id = get_top_player(available_players, team)
-    player = player_history[top_player_id]
-
-    if team.is_position_open(player.position):
-            return top_player_id
+    return top_player_id
