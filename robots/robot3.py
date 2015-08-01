@@ -48,10 +48,7 @@ def calculate_vbd_baselines(pos,starters):
     worst_starter = top_scores[-1]
     return average_starter, worst_starter
 
-
-
-
-def draft_player(available_players, team):
+def get_top_player(available_players, team):
     global current_year
     qb_avg, qb_worst = calculate_vbd_baselines("QB",12)
     rb_avg, rb_worst = calculate_vbd_baselines("RB",29)
@@ -60,6 +57,7 @@ def draft_player(available_players, team):
     k_avg, k_worst = calculate_vbd_baselines("K",12)
     def_avg, def_worst = calculate_vbd_baselines("DEF",12)
 
+    """ printing the VBD baselines. Just informational
     print("The VBD baselines are as follows:")
     print("QB Average: %s. QB Worst: %s" %(qb_avg,qb_worst))
     print("RB Average: %s. RB Worst: %s" %(rb_avg,rb_worst))
@@ -67,53 +65,58 @@ def draft_player(available_players, team):
     print("TE Average: %s. TE Worst: %s" %(te_avg,te_worst))
     print("K Average: %s. K Worst: %s" %(k_avg,k_worst))
     print("DEF Average: %s. DEF Worst: %s" %(def_avg,def_worst))
+    """
 
     all_available_vbd_scores = {}
-    for i in range(0, len(available_players)):
+    # we don't want to accidentally return a player for a filled position, so get a list of open slots
+    open_positions = []
+    for i in ["QB","RB","WR","TE","FLEX","K","DEF"]:
+        if team.is_position_open(i):
+            open_positions.append(i)
 
+    # run through the list of available players and calculate their VBD score
+    for i in range(0, len(available_players)):
         # Access the players projections as well as past yearly and weekly stats to make your decision
         player = player_history[available_players[i]]
         projection = player.yearly_data["Projected"].season_totals
-        last_season = player.yearly_data[current_year - 1].season_totals
-        #print(player.position)
-        #print(projection.team)
-        #print(projection.points)
-        if player.position == "QB":
-            avg_starter = qb_avg
-            worst_starter = qb_worst
-        if player.position == "RB":
-            avg_starter = rb_avg
-            worst_starter = rb_worst
-        if player.position == "WR":
-            avg_starter = wr_avg
-            worst_starter = wr_worst
-        if player.position == "TE":
-            avg_starter = te_avg
-            worst_starter = te_worst
-        if player.position == "K":
-            avg_starter = k_avg
-            worst_starter = k_worst
-        if player.position == "DEF":
-            avg_starter = def_avg
-            worst_starter = def_worst
-        score_above_avg = projection.points - avg_starter
-        score_above_worst = projection.points - worst_starter
-        vbd_score = ((((score_above_avg*2)+(score_above_worst))/3)*.01)
-        all_available_vbd_scores[vbd_score] = available_players[i]
+        # skip players at a position that's already filled
+        if player.position in open_positions:
+            # get the VBD baselines for the various positions
+            if player.position == "QB":
+                avg_starter = qb_avg
+                worst_starter = qb_worst
+            if player.position == "RB":
+                avg_starter = rb_avg
+                worst_starter = rb_worst
+            if player.position == "WR":
+                avg_starter = wr_avg
+                worst_starter = wr_worst
+            if player.position == "TE":
+                avg_starter = te_avg
+                worst_starter = te_worst
+            if player.position == "K":
+                avg_starter = k_avg
+                worst_starter = k_worst
+            if player.position == "DEF":
+                avg_starter = def_avg
+                worst_starter = def_worst
+            # calculate the vbd score for the player
+            score_above_avg = projection.points - avg_starter
+            score_above_worst = projection.points - worst_starter
+            vbd_score = ((((score_above_avg*2)+(score_above_worst))/3)*.01)
 
-        print("Player: %s. VBD Score: %s " %(available_players[i],vbd_score))
-        print("the dict of vbd scores is: %s" %all_available_vbd_scores)
+            # create a dict matching the vbd score to the available players
+            all_available_vbd_scores[vbd_score] = available_players[i]
 
-        # DONE - get average starter score for each position
-        # DONE - get the worst starter score for each position
-        # DONE - go through available players
-        # compare each player to these numbers
-        # generate VBD score
+    # get the top player score
+    top_player_score = min(all_available_vbd_scores.keys(), key=(lambda k: all_available_vbd_scores[k]))
+    # get the id/adp for the top player
+    top_player_id = all_available_vbd_scores[top_player_score]
+    return top_player_id
 
+def draft_player(available_players, team):
+    top_player_id = get_top_player(available_players, team)
+    player = player_history[top_player_id]
 
-        #good idea to try and calculate this based on all players, and then all available players
-
-
-        # Replace this logic with your own
     if team.is_position_open(player.position):
-        return available_players[i]
+            return top_player_id
